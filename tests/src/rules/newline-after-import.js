@@ -92,6 +92,21 @@ ruleTester.run('newline-after-import', require('rules/newline-after-import'), {
       options: [{ 'count': 2 }],
     },
     {
+      code: `import foo from 'foo';\n\n\nvar bar = 'bar';`,
+      parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
+      options: [{ 'count': 2, 'exactCount': true }],
+    },
+    {
+      code: `import foo from 'foo';\n\nvar bar = 'bar';`,
+      parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
+      options: [{ 'count': 1, 'exactCount': true }],
+    },
+    {
+      code: `import foo from 'foo';\n\n\nvar bar = 'bar';`,
+      parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
+      options: [{ 'count': 1 }],
+    },
+    {
       code: `import foo from 'foo';\n\n\n\n\nvar bar = 'bar';`,
       parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
       options: [{ 'count': 4 }],
@@ -109,6 +124,11 @@ ruleTester.run('newline-after-import', require('rules/newline-after-import'), {
       code: `var foo = require('foo-module');\n\n\n\n\nvar foo = 'bar';`,
       parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
       options: [{ 'count': 4 }],
+    },
+    {
+      code: `var foo = require('foo-module');\n\n\n\n\nvar foo = 'bar';`,
+      parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
+      options: [{ 'count': 4, 'exactCount' : true }],
     },
     {
       code: `require('foo-module');\n\nvar foo = 'bar';`,
@@ -453,5 +473,60 @@ ruleTester.run('newline-after-import', require('rules/newline-after-import'), {
       parserOptions: { sourceType: 'module' },
       parser: require.resolve('babel-eslint'),
     })) || [],
+    {
+      code: `import foo from 'foo';\n\nexport default function() {};`,
+      output: `import foo from 'foo';\n\n\nexport default function() {};`,
+      options: [{ 'count': 2, exactCount: true }],
+      errors: [ {
+        line: 1,
+        column: 1,
+        message: IMPORT_ERROR_MESSAGE_MULTIPLE(2),
+      } ],
+      parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
+    },
+    {
+      code: `import foo from 'foo';\n\n\n\nexport default function() {};`,
+      output: null,
+      options: [{ 'count': 2, exactCount: true }],
+      errors: [ {
+        line: 1,
+        column: 1,
+        message: IMPORT_ERROR_MESSAGE_MULTIPLE(2),
+      } ],
+      parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
+    },
+    {
+      code: `import foo from 'foo';\n\n\n\n\nexport default function() {};`,
+      output: null,
+      options: [{ 'count': 2, exactCount: true }],
+      errors: [ {
+        line: 1,
+        column: 1,
+        message: IMPORT_ERROR_MESSAGE_MULTIPLE(2),
+      } ],
+      parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
+    },
+    {
+      code: `import foo from 'foo';export default function() {};`,
+      output: `import foo from 'foo';\n\nexport default function() {};`,
+      options: [{ 'count': 1, exactCount: true }],
+      errors: [ {
+        line: 1,
+        column: 1,
+        message: IMPORT_ERROR_MESSAGE,
+      } ],
+      parserOptions: { ecmaVersion: 2015, sourceType: 'module' },
+    },
+    {
+      code: `const foo = require('foo');\n\n\n\nconst bar = function() {};`,
+      output: null,
+      options: [{ 'count': 2, exactCount: true }],
+      errors: [ {
+        line: 1,
+        column: 1,
+        message: 'Expected 2 empty lines after require statement not followed by another require.',
+      } ],
+      parserOptions: { ecmaVersion: 2015 },
+    },
   ),
 });

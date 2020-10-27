@@ -60,14 +60,18 @@ module.exports = {
     fixable: 'whitespace',
     schema: [
       {
-        'type': 'object',
-        'properties': {
-          'count': {
-            'type': 'integer',
-            'minimum': 1,
+        type: 'object',
+        properties: {
+          count: {
+            type: 'integer',
+            minimum: 1,
+          },
+          exactCount: {
+            type: 'boolean',
+            default: false,
           },
         },
-        'additionalProperties': false,
+        additionalProperties: false,
       },
     ],
   },
@@ -86,11 +90,14 @@ module.exports = {
         nextNode = nextNode.decorators[0];
       }
 
-      const options = context.options[0] || { count: 1 };
+      const options = context.options[0] || { count: 1, exactCount: false };
       const lineDifference = getLineDifference(node, nextNode);
       const EXPECTED_LINE_DIFFERENCE = options.count + 1;
 
-      if (lineDifference < EXPECTED_LINE_DIFFERENCE) {
+      if (
+        lineDifference < EXPECTED_LINE_DIFFERENCE
+        || options.exactCount && lineDifference !== EXPECTED_LINE_DIFFERENCE
+      ) {
         let column = node.loc.start.column;
 
         if (node.loc.start.line !== node.loc.end.line) {
@@ -104,10 +111,15 @@ module.exports = {
           },
           message: `Expected ${options.count} empty line${options.count > 1 ? 's' : ''} \
 after ${type} statement not followed by another ${type}.`,
-          fix: fixer => fixer.insertTextAfter(
-            node,
-            '\n'.repeat(EXPECTED_LINE_DIFFERENCE - lineDifference)
-          ),
+          fix: fixer => {
+            if (options.exactCount && EXPECTED_LINE_DIFFERENCE < lineDifference) {
+              return null;
+            }
+            return fixer.insertTextAfter(
+              node,
+              '\n'.repeat(EXPECTED_LINE_DIFFERENCE - lineDifference)
+            );
+          },
         });
       }
     }
@@ -137,7 +149,7 @@ after ${type} statement not followed by another ${type}.`,
     return {
       ImportDeclaration: checkImport,
       TSImportEqualsDeclaration: checkImport,
-      CallExpression: function(node) {
+      CallExpression: function (node) {
         if (isStaticRequire(node) && level === 0) {
           requireCalls.push(node);
         }
@@ -159,8 +171,10 @@ after ${type} statement not followed by another ${type}.`,
             return;
           }
 
-          if (nextStatement &&
-             (!nextRequireCall || !containsNodeOrEqual(nextStatement, nextRequireCall))) {
+          if (
+            nextStatement
+            && (!nextRequireCall || !containsNodeOrEqual(nextStatement, nextRequireCall))
+          ) {
 
             checkForNewLine(statementWithRequireCall, nextStatement, 'require');
           }
